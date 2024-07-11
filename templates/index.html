@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Text Emotion Classification</title>
+    <style>
+        body {
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            font-family: Arial, sans-serif;
+
+        }
+
+        button {
+            margin-top: 10px;
+            padding: 10px 20px;
+            background-color: #5CACEE;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .container {
+            text-align: center;
+        }
+
+
+        h1 {
+            text-align: center;
+            background-color: #5CACEE;
+        }
+
+        h3 {
+            text-align: center;
+        }
+
+        .box {
+            position: relative;
+            background: #ffffff;
+            width: 100%;
+        }
+
+        .box-header {
+            color: #444;
+            display: block;
+            padding: 10px;
+            position: relative;
+            border-bottom: 1px solid #f4f4f4;
+            margin-bottom: 10px;
+        }
+
+        .cancel-button {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            cursor: pointer;
+            color: black;
+            font-size: 20px;
+            vertical-align: middle;
+        }
+
+        .box-tools {
+            position: absolute;
+            right: 10px;
+            top: 5px;
+        }
+
+        .dropzone-wrapper {
+            border: 2px dashed #91b0b3;
+            color: #92b0b3;
+            position: relative;
+            height: 150px;
+            width: 50%;
+            margin: auto;
+            justify-content: center;
+            flex-direction: column;
+            min-height: 150px;
+        }
+
+        .dropzone-desc {
+            position: absolute;
+            margin: 0 auto;
+            left: 0;
+            right: 0;
+            text-align: center;
+            min-height: 100px;
+            cursor: pointer;
+            width: 100%;
+            /* Ensures the label covers the full area of the dropzone */
+            top: 60px;
+            font-size: 16px;
+            min-height: 150px;
+        }
+
+        .dropzone,
+        .dropzone:focus {
+            position: absolute;
+            outline: none !important;
+            width: 100%;
+            height: 150px;
+            cursor: pointer;
+            opacity: 0;
+        }
+
+        .dropzone-wrapper:hover,
+        .dropzone-wrapper.dragover {
+            background: #ecf0f5;
+        }
+
+        .preview-zone {
+            text-align: center;
+        }
+
+        .preview-zone .box {
+            box-shadow: none;
+            border-radius: 0;
+            margin-bottom: 0;
+        }
+
+
+
+
+        form,
+        .result-container {
+            background-color: #f2f2f2;
+            width: 100%;
+            box-sizing: border-box;
+            text-align: center;
+        }
+
+        .file-upload {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #f4f4f4;
+            border-radius: 8px;
+        }
+
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 20px auto;
+        }
+
+        th,
+        td {
+            border: 9px solid #ddd;
+            padding: 12px;
+            text-align: center;
+            /* Center-align table header and data */
+        }
+
+        .highlight {
+            background-color: #eef1eeca;
+            /* Or any other highlight color */
+            color: rgb(12, 12, 12);
+            font-weight: bold;
+        }
+
+        th {
+            background-color: #e0e0e0;
+        }
+
+        input[type="text"],
+        textarea {
+            width: 800px;
+            height: 130px;
+            padding: 10px;
+            margin: 10px 0;
+            border: 3px solid #ccc;
+            border-radius: 8px;
+        }
+
+        input[type="submit"] {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        input[type="submit"]:hover {
+            background-color: #45a049;
+        }
+
+        .btn-clear {
+            background-color: #eb521a;
+            /* Warna latar belakang */
+            color: white;
+            /* Warna teks */
+            border: none;
+            /* Hapus border */
+            padding: 10px 20px;
+            /* Padding */
+            margin-left: 10px;
+            /* Jarak dari elemen sebelumnya */
+            cursor: pointer;
+            /* Ubah kursor menjadi pointer */
+        }
+
+        /* Styling tambahan ketika mouse hover */
+        .btn-clear:hover {
+            background-color: #9b4e2a;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>Text Emotion Classification</h1>
+        <form action="/classify" method="POST">
+            <br>
+            <label for="text">Enter Text:</label><br>
+            <textarea id="text" name="text" rows="4" cols="50">{{ input_text|default('') }}</textarea><br><br>
+            <button type="button" onclick="clearText()" class="btn-clear">Clear</button>
+            <input type="submit" value="Classify">
+            <p id="displayText">{{ input_text }}</p>
+        </form>
+    </div>
+
+
+    <div class="file-upload">
+        <h3>Upload Excel Document</h3>
+        <form id="uploadForm" action="/upload" method="post" enctype="multipart/form-data">
+            <div class="container">
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="form-group">
+                            <div class="preview-zone hidden">
+                                <div class="box box-solid">
+                                </div>
+                                <div class="box-body"></div>
+                            </div>
+                        </div>
+                        <div class="dropzone-wrapper">
+                            <div class="dropzone-desc">
+                                <div class="col-md-12">
+                                    <input type="file" name="file" id="fileInput" hidden>
+                                    <label for="fileInput" id="fileLabel">Choose the .xlsx file or drag it here.</label>
+                                    <span id="cancelButton"
+                                        style="display: none; cursor: pointer; margin-left: 10px;">&#10005;</span>
+                                </div>
+                                <br>
+                                <br>
+                                <br>
+                                <br>
+                                <br>
+                                <button type="submit" id="uploadButton" disabled>Upload</button>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+            </div>
+    </div>
+    </form>
+    </div>
+
+    <br>
+    <br>
+    <br>
+
+    <script>
+        var textArea = document.getElementById("text");
+        document.getElementById('uploadForm').addEventListener('submit', function (event) {
+            event.preventDefault();
+            var formData = new FormData();
+            var fileInput = document.getElementById('fileInput');
+            formData.append('file', fileInput.files[0]);
+            fetch('/upload', {
+                method: 'POST',
+                body: formData
+            })
+                .then(response => response.text())
+                .then(data => {
+                    console.log(data);
+                    alert(data);
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                });
+        });
+
+        // Update display text on classification
+        document.getElementById('displayText').innerText = textArea.value;
+    </script>
+
+    <script>
+        document.getElementById('fileInput').addEventListener('change', function () {
+            updateFileNameAndEnableUpload(this.files);
+        });
+
+        var dropzone = document.getElementById('fileLabel');
+        dropzone.addEventListener('dragover', function (e) {
+            e.preventDefault();
+            dropzone.classList.add('dragover');
+        });
+
+        dropzone.addEventListener('dragleave', function (e) {
+            e.preventDefault();
+            dropzone.classList.remove('dragover');
+        });
+
+        dropzone.addEventListener('drop', function (e) {
+            e.preventDefault();
+            dropzone.classList.remove('dragover');
+            var files = e.dataTransfer.files;
+            document.getElementById('fileInput').files = files;
+            updateFileNameAndEnableUpload(files);
+        });
+
+        document.getElementById('cancelButton').addEventListener('click', function () {
+            resetUpload();
+        });
+
+        function updateFileNameAndEnableUpload(files) {
+            if (files.length > 0) {
+                var fileLabel = document.getElementById('fileLabel');
+                fileLabel.textContent = files[0].name;  // Display the file name
+                document.getElementById('uploadButton').disabled = false;  // Enable the upload button
+                document.getElementById('cancelButton').style.display = 'inline';  // Show the cancel button
+            }
+        }
+
+        function resetUpload() {
+            var fileInput = document.getElementById('fileInput');
+            var fileLabel = document.getElementById('fileLabel');
+            var cancelButton = document.getElementById('cancelButton');
+
+            fileInput.value = '';  // Clear the file input
+            fileLabel.textContent = 'Choose the .xlsx file or drag it here.';  // Reset the label
+            cancelButton.style.display = 'none';  // Hide the cancel button
+            document.getElementById('uploadButton').disabled = true;  // Disable the upload button
+        }
+    </script>
+
+
+    <script>
+        function clearText() {
+            document.getElementById('text').value = '';
+        }
+    </script>
+
+
+
+
+    {% if result %}
+    <div class="result-container">
+        <table>
+            <tr>
+                <th>Classification Result:</th>
+            </tr>
+            {% for emotion, percentage in result.items() %}
+            <tr class="{{ 'highlight' if percentage == highest_percentage }}">
+                <td>{{ emotion }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+    </div>
+    {% endif %}
+    </div>
+
+</body>
+
+</html>
